@@ -475,10 +475,14 @@ func renderURL(r *registry.Registry) func(method data.Method) string {
 			log.Debugf("url matches %v", matches)
 			for _, m := range matches {
 				expToReplace := m[0]
-				fieldName := fieldNameFn(m[1])
-				part := fmt.Sprintf(`${req["%s"]}`, fieldName)
-				methodURL = strings.ReplaceAll(methodURL, expToReplace, part)
-				fieldsInPath = append(fieldsInPath, fmt.Sprintf(`"%s"`, fieldName))
+
+				fields := strings.Split(m[1], ".")
+				for i := range fields {
+					fields[i] = fieldNameFn(fields[i])
+				}
+
+				methodURL = strings.ReplaceAll(methodURL, expToReplace, fmt.Sprintf(`${req["%s"]}`, strings.Join(fields, `"]?.["`)))
+				fieldsInPath = append(fieldsInPath, fmt.Sprintf(`"%s"`, strings.Join(fields, ".")))
 			}
 		}
 		urlPathParams := fmt.Sprintf("[%s]", strings.Join(fieldsInPath, ", "))
